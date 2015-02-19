@@ -15,7 +15,7 @@ import javafx.stage.Stage;
 /* This should contain code which handles GUI events */
 public class GuiController {	
 	
-	@FXML private Stage stage;
+	@FXML private Stage stage;	
 	
 	// Device Model Certificate Request Tab
 	@FXML protected TextField modelOutputFileChooserText;
@@ -52,7 +52,7 @@ public class GuiController {
 	///////////////////////////////////////////////////////////////////////
 	//        Device Model Certificate Request Event Handlers
 	///////////////////////////////////////////////////////////////////////
-	@FXML protected void handleGenerateModelCertRequestButtonAction(ActionEvent event) {
+	@FXML protected void handleGenerateModelCertRequestButtonAction(ActionEvent event) throws IOException {
 		//TODO: create OpenSSL command and run it.
 		
 		/* Default Values */
@@ -81,17 +81,7 @@ public class GuiController {
 		default:
 			break;
 		}
-		
-		
-		/*
-		 * Unfortunately, OpenSSL is crazy and inconsistent, necessitating the use of
-		 * pre-generated key configuration files and a different command syntax
-		 * when using any key algorithm other than RSA.
-		 * (consider demoing the tool using RSA??)
-		 * 
-		 * http://www.openssl.org/docs/apps/req.html#
-		 * (scroll down to '-newkey arg')
-		 */
+
 		switch (modelKeySizeChoiceBox.getSelectionModel().getSelectedIndex()) {
 		case -1 :
 			System.err.println("Invalid key size selection!");
@@ -137,49 +127,27 @@ public class GuiController {
 		if(!modelManufacturerTextField.getText().isEmpty()) {
 			organization = modelManufacturerTextField.getText();
 		}
-		
-		
-		/*String[] command = new String[]{
-				"/bin/sh", "-c", "openssl req -nodes -newkey " + "rsa" + ":" + "2048" +
-				" -keyout " +"private.key" + " -out " + "CSR.csr" + " -subj " +
-				"\"/C=" + "US" + "/ST=" + "Kansas" + "/L=" + "Manhattan" + "/O=" +
-				"KSU" + "/OU=" + "Santos Lab" + "/CN=" + "santoslab.org" + "\""
-				};
-		*/
-		String[] command;
 
-			command = new String[] {
-					"/bin/sh", "-c", "openssl req -nodes -newkey " + keyAlgorithm + ":" + keySize +
-					" -keyout " + privateKeyFileName + ".key" + " -out " + csrFileName + " -subj " +
-					"\"/C=" + country + "/ST=" + state + "/L=" + locale + "/O=" +
-					organization + "/OU=" + orgUnit + "/CN=" + commonName + "/emailAddress=" + email + "\""
-			};
-
+		commonName="N900";
+		organization = "Nellcor";
+		email="cert@example.org";
+		locale="manhattan";
+		state="kansas";
+		country="US";
 		
-		/* Used only for debugging! */
-		for (String s : command) {
-			System.out.print(s + " ");
+		String dn = "CN="+commonName+" O="+organization+" email="+email+" L="+locale+" ST="+state+" C="+country;
+		System.out.println("Distinguished Name :" + dn);
+		
+		CreateX509Certificate certificate = new CreateX509Certificate();
+		certificate.generate(dn,csrFileName,keyAlgorithm);
+		
+		int a=0;
+		
+		if(a==0) {
+			System.out.println("Certificate Request Generated");
 		}
-		System.out.println();
-
-		//use process builder -above comand does generate a CSR already.
-		try {			
-
-			//Runtime.getRuntime().exec(command);
-			Process p = new ProcessBuilder(command).start();
-			
-			if(p.waitFor()==0) {
-				System.out.println("Certificate Request Generated");
-			}
-			else {
-				System.err.println("Certificate Request Generation Failed.");
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		else {
+			System.err.println("Certificate Request Generation Failed.");
 		} 
 
 	}
