@@ -151,6 +151,8 @@
                             </FXCollections>
                           </items>
                         </ChoiceBox>
+                        <TextField layoutX="12.0" layoutY="105.0" prefWidth="86.5" />
+                        <Label layoutX="123.0" layoutY="108.0" text="Days of certificate validity" />
                         <Button fx:id="generateModelCertRequestButton" layoutX="18.0" layoutY="178.0" mnemonicParsing="false" onAction="#handleGenerateModelCertRequestButtonAction" prefHeight="37.310546875" text="Generate Device Model Certificate Request" />
                         <TextField fx:id="modelOutputFileChooserText" layoutX="14.0" layoutY="142.0" onAction="#handleModelEnterKeyAction" prefWidth="163.0" text="n900csr.csr" />
                         <Button layoutX="176.0" layoutY="142.0" minWidth="21.0" mnemonicParsing="false" onAction="#handleModelFileDialogButtonAction" prefWidth="39.0" text="..." />

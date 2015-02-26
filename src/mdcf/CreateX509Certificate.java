@@ -51,12 +51,13 @@ public class CreateX509Certificate {
 	  // Sign the cert to identify the algorithm that's used.
 	  X509CertImpl newcert = new X509CertImpl(info);
 	  newcert.sign(caPrivateKey, algorithm);
+	  
 	 
 	  // Update the algorithm, and resign.
-//	  algo = (AlgorithmId)cert.get(X509CertImpl.SIG_ALG);
-//	  info.set(CertificateAlgorithmId.NAME + "." + CertificateAlgorithmId.ALGORITHM, algo);
-//	  cert = new X509CertImpl(info);
-//	  cert.sign(privkey, algorithm);
+	  algo = (AlgorithmId)newcert.get(X509CertImpl.SIG_ALG);
+	  info.set(CertificateAlgorithmId.NAME + "." + CertificateAlgorithmId.ALGORITHM, algo);
+	  newcert = new X509CertImpl(info);
+	  newcert.sign(caPrivateKey, algorithm);
 	  return newcert;
 	}   
 	
@@ -78,6 +79,8 @@ public class CreateX509Certificate {
 		try {
 			File file = new File("sample1.pem");
 		    byte[] buf = cert.getEncoded();
+		    
+		  
 
 		    FileOutputStream os = new FileOutputStream(file);
 		    os.write(buf);
@@ -100,7 +103,7 @@ public class CreateX509Certificate {
 	
 	}
 
-	public void generate(String dn, String csrFileName, String keyAlgorithm) {
+	public void generate(String dn, String csrFileName, int validity, String keyAlgorithm) {
 		// TODO Auto-generated method stub
 		
 		try {

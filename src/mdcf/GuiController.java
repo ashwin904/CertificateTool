@@ -65,7 +65,7 @@ public class GuiController {
 		String locale = "";
 		String organization = "KSU";
 		String orgUnit = "";
-		String email = "csalazar@ksu.edu";
+		String email = "ashwin904@ksu.edu";
 		String commonName = "santoslab.org";
 
 		switch (modelAlgorithmChoiceBox.getSelectionModel().getSelectedIndex()) {
@@ -127,19 +127,15 @@ public class GuiController {
 		if(!modelManufacturerTextField.getText().isEmpty()) {
 			organization = modelManufacturerTextField.getText();
 		}
-
-		commonName="N900";
-		organization = "Nellcor";
-		email="cert@example.org";
-		locale="manhattan";
-		state="kansas";
-		country="US";
 		
-		String dn = "CN="+commonName+" O="+organization+" email="+email+" L="+locale+" ST="+state+" C="+country;
+		String dn = "CN="+commonName+" O="+organization+" email="+email+" ST="+state+" C="+country;
 		System.out.println("Distinguished Name :" + dn);
+		System.out.println("Algorithm: " + keyAlgorithm);
+		System.out.println("Key Size: " +keySize);
+		//System.out.println("Days of validity : " + validity);
 		
-		CreateX509Certificate certificate = new CreateX509Certificate();
-		certificate.generate(dn,csrFileName,keyAlgorithm);
+		//CreateX509Certificate certificate = new CreateX509Certificate();
+		//certificate.generate(dn,csrFileName,10,keyAlgorithm);
 		
 		int a=0;
 		
