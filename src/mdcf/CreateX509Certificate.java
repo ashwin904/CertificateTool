@@ -1,12 +1,5 @@
 package mdcf;
 
-import sun.security.x509.*;
-
-import java.security.cert.*;
-import java.security.*;
-import java.math.BigInteger;
-import java.nio.charset.Charset;
-import java.util.Date;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -14,6 +7,31 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.math.BigInteger;
+import java.nio.charset.Charset;
+import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Date;
+
+import sun.security.x509.AlgorithmId;
+import sun.security.x509.CertificateAlgorithmId;
+import sun.security.x509.CertificateSerialNumber;
+import sun.security.x509.CertificateValidity;
+import sun.security.x509.CertificateVersion;
+import sun.security.x509.CertificateX509Key;
+import sun.security.x509.X500Name;
+import sun.security.x509.X509CertImpl;
+import sun.security.x509.X509CertInfo;
 
 
 public class CreateX509Certificate {
@@ -25,12 +43,28 @@ public class CreateX509Certificate {
 	 * @param days how many days from now the Certificate is valid for
 	 * @param algorithm the signing algorithm, eg "SHA1withRSA"
 	 */ 
-	public X509Certificate generateCertificate(String dn, KeyPair pair, int days, String algorithm)
+	public X509Certificate generateCertificate(String dn, int days, String algorithm)
 	  throws GeneralSecurityException, IOException
 	{
+		FileInputStream keyfis = new FileInputStream("Caprivatekey");
+		byte[] encKey = new byte[keyfis.available()];  
+		keyfis.read(encKey);
+		keyfis.close();
+		PKCS8EncodedKeySpec prKeySpec = new PKCS8EncodedKeySpec(encKey);
+		KeyFactory keyFactory = KeyFactory.getInstance("DSA", "SUN");
+		PrivateKey caPrivateKey = keyFactory.generatePrivate(prKeySpec);
 		
-	  PrivateKey caPrivateKey = pair.getPrivate();
+		keyfis = new FileInputStream("Capublickey");
+		encKey = new byte[keyfis.available()];  
+		keyfis.read(encKey);
+		keyfis.close();
+		X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(encKey);
+		keyFactory = KeyFactory.getInstance("DSA", "SUN");
+		PublicKey caPublicKey = keyFactory.generatePublic(pubKeySpec);
+		
+		
 	  X509CertInfo info = new X509CertInfo();
+	  
 	  
 	  Date from = new Date();
 	  //check if this is indeed valid!!
@@ -43,7 +77,7 @@ public class CreateX509Certificate {
 	  info.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber(sn));
 	  info.set(X509CertInfo.SUBJECT,owner);
 	  info.set(X509CertInfo.ISSUER,owner);
-	  info.set(X509CertInfo.KEY, new CertificateX509Key(pair.getPublic()));
+	  info.set(X509CertInfo.KEY, new CertificateX509Key(caPublicKey));
 	  info.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V3));
 	  AlgorithmId algo = new AlgorithmId(AlgorithmId.sha1WithDSA_oid);
 	  info.set(X509CertInfo.ALGORITHM_ID, new CertificateAlgorithmId(algo));
@@ -103,20 +137,24 @@ public class CreateX509Certificate {
 	
 	}
 
-	public void generate(String dn, String csrFileName, int validity, String keyAlgorithm) {
+	public X509Certificate generate() {
 		// TODO Auto-generated method stub
 		
 		try {
-			keyAlgorithm="DSA";
-			KeyPair keypair = generateKeyPair(keyAlgorithm);
-			X509Certificate certificate = generateCertificate(dn, keypair, 30, "SHA1withDSA");
-			pushToFile(certificate);
-			
+			String keyAlgorithm="DSA";
+			String dn = "CN=ashwin, L=manhattan, ST=KS, C=US";
+			//KeyPair keypair = generateKeyPair(keyAlgorithm);
+			X509Certificate cert = generateCertificate(dn,30,"SHA1withDSA");
 			System.out.println("successfull execution");
+			
+			return cert;
+			
 		} catch (GeneralSecurityException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		return null;
 		
 	}
 	

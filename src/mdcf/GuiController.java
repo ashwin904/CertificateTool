@@ -2,6 +2,8 @@ package mdcf;
 import java.io.File;
 import java.io.IOException;
 
+import sun.security.pkcs10.PKCS10;
+import sun.security.x509.X500Name;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -16,6 +18,19 @@ import javafx.stage.Stage;
 public class GuiController {	
 	
 	@FXML private Stage stage;	
+	
+	
+	// Device Model Certificate Request Tab
+		@FXML protected TextField manufacturerOutputFileChooserText;
+		@FXML protected Button generatemanufacturerCertRequestButton;
+		@FXML protected ChoiceBox manufacturerAlgorithmChoiceBox;
+		@FXML protected ChoiceBox manufacturerKeySizeChoiceBox;
+		@FXML protected TextField manufacturerValidDaysTextField;
+		@FXML protected ChoiceBox manufacturerStateOrProvenceChoiceBox;
+		@FXML protected ChoiceBox manufacturerCountryChoiceBox;
+		//@FXML protected TextField manufacturerDeviceNameTextField;
+		@FXML protected TextField manufacturerManufacturerTextField;
+		@FXML protected TextField manufacturerEmailTextField;
 	
 	// Device Model Certificate Request Tab
 	@FXML protected TextField modelOutputFileChooserText;
@@ -44,8 +59,112 @@ public class GuiController {
 	
 	public void setStage(Stage stage) {
 		this.stage = stage;
+	}
+	
+	///////////////////////////////////////////////////////////////////////
+	//        Manufacturer Certificate Request Event Handlers
+	///////////////////////////////////////////////////////////////////////
+	@FXML protected void handleGenerateManufacturerCertRequestButtonAction(ActionEvent event) throws IOException {
+
+		/* Default Values */
+		String keyAlgorithm = "rsa";
+		String keySize = "2048";
+		String privateKeyFileName = "private";
+		String csrFileName = "CSR";
+		String country = "US";
+		String state = "KS";
+		String locale = "";
+		String organization = "KSU";
+		String orgUnit = "";
+		String email = "ashwin904@ksu.edu";
+		String commonName = "santoslab.org";
+
+		switch (manufacturerAlgorithmChoiceBox.getSelectionModel().getSelectedIndex()) {
+		case -1 :
+			System.err.println("Invalid algorithm selection!");
+			break;
+		case 0 : //SHA1withDSA
+			keyAlgorithm = "DSA";
+			break;
+		case 1 : //SHA1withRSA
+			keyAlgorithm = "RSA";
+			break;
+		default:
+			break;
+		}
+
+		switch (manufacturerKeySizeChoiceBox.getSelectionModel().getSelectedIndex()) {
+		case -1 :
+			System.err.println("Invalid key size selection!");
+			break;
+		case 0 : //1024
+			keySize = "1024";
+			break;
+		case 1 : //2048
+			keySize = "2048";
+			break;
+		default:
+			break;
+		}
+
+		if (!manufacturerOutputFileChooserText.getText().isEmpty()) {
+			privateKeyFileName = manufacturerOutputFileChooserText.getText() + "priv";
+			csrFileName =manufacturerOutputFileChooserText.getText();
+		}
+
+		if (manufacturerCountryChoiceBox.getSelectionModel().getSelectedIndex() != -1) {
+			country = manufacturerCountryChoiceBox.getSelectionModel().getSelectedItem().toString();
+		}
+
+		if (manufacturerStateOrProvenceChoiceBox.getSelectionModel().getSelectedIndex() != -1) {
+			state = manufacturerStateOrProvenceChoiceBox.getSelectionModel().getSelectedItem().toString();
+		}
+
+		//TODO: add locale to GUI (replace phone)
+		//TODO: add Organization to GUI (replace email)
+		//TODO: add Organizational Unit to GUI
+		//TODO: figure out how to attach other fields to CSR
+
+		if(!manufacturerEmailTextField.getText().isEmpty()) {
+			email = manufacturerEmailTextField.getText();
+		}
+
+		if(!manufacturerManufacturerTextField.getText().isEmpty()) {
+			organization = manufacturerManufacturerTextField.getText();
+		}
+
+		String dn = " O="+organization+" email="+email+" ST="+state+" C="+country;
+		System.out.println("Distinguished Name :" + dn);
+		System.out.println("Algorithm: " + keyAlgorithm);
+		System.out.println("Key Size: " +keySize);
+
 		
-		//handleGenerateModelCertRequestButtonAction(new ActionEvent());
+		X500Name x500Name = new X500Name(
+                "",               // CN
+                email,               // OU
+                organization,          // O
+                "",          // L
+                state,               // S
+                country); 
+		
+		CSRRequest csrRequest = new CSRRequest();
+		HandleCSRRequest handleCSRRequest = new HandleCSRRequest();
+		try {
+			PKCS10 pkcs10 = csrRequest.generatePKCS10(keyAlgorithm, keySize, x500Name,csrFileName);
+			handleCSRRequest.handleRequest(pkcs10, "nellcor");
+			if (pkcs10!=null){
+				System.out.println("Certificate Request Generated");
+				System.out.println("Certificate Created!!");
+			}
+			else {
+				System.err.println("Certificate Request Generation Failed.");
+			} 
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 	
 	
@@ -53,14 +172,13 @@ public class GuiController {
 	//        Device Model Certificate Request Event Handlers
 	///////////////////////////////////////////////////////////////////////
 	@FXML protected void handleGenerateModelCertRequestButtonAction(ActionEvent event) throws IOException {
-		//TODO: create OpenSSL command and run it.
 		
 		/* Default Values */
 		String keyAlgorithm = "rsa";
 		String keySize = "2048";
 		String privateKeyFileName = "private";
 		String csrFileName = "CSR";
-		String country = "US"; //Country codes MUST be 2 characters long
+		String country = "US";
 		String state = "KS";
 		String locale = "";
 		String organization = "KSU";
@@ -73,10 +191,10 @@ public class GuiController {
 			System.err.println("Invalid algorithm selection!");
 			break;
 		case 0 : //SHA1withDSA
-			keyAlgorithm = "dsa";
+			keyAlgorithm = "DSA";
 			break;
 		case 1 : //SHA1withRSA
-			keyAlgorithm = "rsa";
+			keyAlgorithm = "RSA";
 			break;
 		default:
 			break;
@@ -134,17 +252,31 @@ public class GuiController {
 		System.out.println("Key Size: " +keySize);
 		//System.out.println("Days of validity : " + validity);
 		
-		//CreateX509Certificate certificate = new CreateX509Certificate();
-		//certificate.generate(dn,csrFileName,10,keyAlgorithm);
+        
+		X500Name x500Name = new X500Name(
+				commonName,               // CN
+                email,               // OU
+                organization,          // O
+                "",          // L
+                state,               // S
+                country); 
 		
-		int a=0;
-		
-		if(a==0) {
-			System.out.println("Certificate Request Generated");
+		CSRRequest csrRequest = new CSRRequest();
+		HandleCSRRequest handleCSRRequest = new HandleCSRRequest();
+		try {
+			PKCS10 pkcs10 = csrRequest.generatePKCS10(keyAlgorithm, keySize, x500Name,csrFileName);
+		//	handleCSRRequest.handleRequest(pkcs10, "DeviceModelCertificate");
+			if (pkcs10!=null){
+				System.out.println("Certificate Request Generated");
+			}
+			else {
+				System.err.println("Certificate Request Generation Failed.");
+			} 
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		else {
-			System.err.println("Certificate Request Generation Failed.");
-		} 
 
 	}
 	
@@ -404,12 +536,12 @@ public class GuiController {
 	 */
 	@FXML protected void handleModelSignButtonAction(ActionEvent event) {
 		String currentDirectory = System.getProperty("user.dir");
-		String csrFileName = "csr.CSR";
+		String csrFileName = "n900csr.csr";
 		String outputFileName = currentDirectory + File.separator + "signedcerts" + File.separator +"devModelCert.crt";
-		String caCertFileName = "cacert.pem";
-		String caCertPrivateKeyFileName = currentDirectory + File.separator + "private" + File.separator + "cakey.pem"; //private key
-		String caPassword = "password";
-		String configFileName = "caconfig.cnf";
+		String caCertFileName = "CACertificate.pem";
+//		String caCertPrivateKeyFileName = currentDirectory + File.separator + "private" + File.separator + "cakey.pem"; //private key
+//		String caPassword = "password";
+//		String configFileName = "caconfig.cnf";
 		String validDays = "1826";
 		
 		//TODO: make the root cert file chooser actually work
@@ -430,40 +562,20 @@ public class GuiController {
 			outputFileName = currentDirectory + File.separator + "signedcerts" + File.separator + modelSignOutputFileChooserText.getText();
 		}
 		
-		String[] command;
+		CSRRequest csrRequest = new CSRRequest();
+		HandleCSRRequest handleCSRRequest = new HandleCSRRequest();
+//		try {
+//			
+//			//handleCSRRequest.handleRequest(pkcs10, "nellcormodel");
+//			if (pkcs10!=null){
+//				System.out.println("Certificate Request Generated");
+//				System.out.println("Certificate Created!!");
+//			}
+//			else {
+//				System.err.println("Certificate Request Generation Failed.");
+//			} 
+			
 		
-		command = new String[] {
-				"/bin/sh", "-c", "openssl ca -batch -in " + csrFileName + 
-				" -out " + outputFileName + " -keyfile " + caCertPrivateKeyFileName +
-				" -cert " + caCertFileName + " -passin pass:" + caPassword + " -config " + configFileName + 
-				" -days " + validDays
-		};
-
-	
-	/* Used only for debugging! */
-	for (String s : command) {
-		System.out.print(s + " ");
-	}
-	System.out.println();
-	
-	try {			
-
-		//Runtime.getRuntime().exec(command);
-		Process p = new ProcessBuilder(command).start();
-		
-		if(p.waitFor()==0) {
-			System.out.println("Certificate Request Generated");
-		}
-		else {
-			System.err.println("Certificate Request Generation Failed.");
-		}
-	} catch (IOException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	} catch (InterruptedException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	} 
 	}
 	
 	
