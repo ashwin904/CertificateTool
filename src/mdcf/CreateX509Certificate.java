@@ -46,7 +46,7 @@ public class CreateX509Certificate {
 	public X509Certificate generateCertificate(String dn, int days, String algorithm)
 	  throws GeneralSecurityException, IOException
 	{
-		FileInputStream keyfis = new FileInputStream("Caprivatekey");
+		FileInputStream keyfis = new FileInputStream("CaPrivateKey.pem");
 		byte[] encKey = new byte[keyfis.available()];  
 		keyfis.read(encKey);
 		keyfis.close();
@@ -54,7 +54,7 @@ public class CreateX509Certificate {
 		KeyFactory keyFactory = KeyFactory.getInstance("DSA", "SUN");
 		PrivateKey caPrivateKey = keyFactory.generatePrivate(prKeySpec);
 		
-		keyfis = new FileInputStream("Capublickey");
+		keyfis = new FileInputStream("CaPublicKey.pem");
 		encKey = new byte[keyfis.available()];  
 		keyfis.read(encKey);
 		keyfis.close();
@@ -94,6 +94,16 @@ public class CreateX509Certificate {
 	  newcert.sign(caPrivateKey, algorithm);
 	  return newcert;
 	}   
+	
+	public X509Certificate generateCertificate(int days, String Algorithm, X509Certificate signer ){
+		
+		
+		
+		
+		
+		return null;
+		
+	}
 	
 	public KeyPair generateKeyPair(String algorithm){
 		KeyPairGenerator keyGen;

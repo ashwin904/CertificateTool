@@ -15,8 +15,9 @@ import sun.security.x509.*;
 
 public class CSRRequest {
 
-	public  PKCS10 generatePKCS10(String keyAlgo, String keySize, X500Name x500Name, String outputFileName) throws Exception {
-        // generate PKCS10 certificate request
+	public  PKCS10 generatePKCS10(String keyAlgo, String keySize, X500Name x500Name, String outputFileName,String publicKeyName, String privateKeyName) throws Exception {
+      
+		// generate PKCS10 certificate request
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance(keyAlgo);
         String sigAlg;
         if(keyAlgo.equals("RSA")){
@@ -25,12 +26,25 @@ public class CSRRequest {
         else{
         sigAlg = "SHA1withDSA";
         }
+        
         // generate private key - use java.util.SecureRandom for entropy
         keyGen.initialize(1024, new SecureRandom());
         KeyPair keypair = keyGen.generateKeyPair();
         
         PublicKey publicKey = keypair.getPublic();
         PrivateKey privateKey = keypair.getPrivate();
+        
+        //write public and private key to a file.
+        if(!publicKeyName.equals("") && !privateKeyName.equals("")){
+        	 byte[] prkey = privateKey.getEncoded();
+             FileOutputStream keyfos = new FileOutputStream(privateKeyName);
+             keyfos.write(prkey);
+             keyfos.close();
+             byte[] pukey = privateKey.getEncoded();
+             keyfos = new FileOutputStream(publicKeyName);
+             keyfos.write(pukey);
+             keyfos.close();
+        }
         
         PKCS10 pkcs10 = new PKCS10(publicKey);
         

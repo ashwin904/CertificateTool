@@ -22,6 +22,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Collection;
@@ -139,16 +140,15 @@ public class HandleCSRRequest {
 	    return bos.getBytes();
 	}
 	
-	public boolean checkExistsCAPublicPrivateKey(){
+	public boolean checkExistsPublicPrivateKey(String publicKey,String privateKey){
 		File dir = new File(System.getProperty("user.dir"));
 	    File[] dir_contents = dir.listFiles();
-	    String CaPublicKey = "Capublickey";
-	    String CaprivateKey = "Caprivatekey";
 	    int a=0,b=0;
 	    for(int i = 0; i<dir_contents.length;i++) {
-	        if(dir_contents[i].getName() == (CaprivateKey))
+	    	System.out.println(dir_contents[i].getName());
+	        if(dir_contents[i].getName().equals(privateKey))
 	            a=1;
-	        if(dir_contents[i].getName() == (CaPublicKey))
+	        if(dir_contents[i].getName().equals(publicKey))
 	        	b=1;
 	        if(a==1 && b==1){
 	        	return true;
@@ -157,12 +157,11 @@ public class HandleCSRRequest {
 	    return false;
 	}
 	
-	public boolean checkExistsCACertificate(){
+	public boolean checkExistsCertificate(String certificateName){
 		File dir = new File(System.getProperty("user.dir"));
 	    File[] dir_contents = dir.listFiles();
-	    String CaCert = "CACertificate.cer";
 	    for(int i = 0; i<dir_contents.length;i++) {
-	        if(dir_contents[i].getName() == (CaCert))
+	        if(dir_contents[i].getName().equals(certificateName))
 	        	return true;
 	    	}
 	    return false;
@@ -171,73 +170,108 @@ public class HandleCSRRequest {
 	
 	public void createCAPublicPrivateKey(String Algorithm) throws NoSuchAlgorithmException, IOException
 	{
-		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA");
+		KeyPairGenerator keyGen = KeyPairGenerator.getInstance(Algorithm);
 		keyGen.initialize(1024, new SecureRandom());
         KeyPair keypair = keyGen.generateKeyPair();
         PublicKey publicKey=keypair.getPublic();
         PrivateKey privateKey = keypair.getPrivate();
         byte[] pukey = publicKey.getEncoded();
-        FileOutputStream keyfos = new FileOutputStream("Capublickey");
+        FileOutputStream keyfos = new FileOutputStream("CaPublicKey.pem");
         keyfos.write(pukey);
         keyfos.close();
         byte[] prkey = privateKey.getEncoded();
-        keyfos = new FileOutputStream("Caprivatekey");
+        keyfos = new FileOutputStream("CaPrivateKey.pem");
         keyfos.write(prkey);
         keyfos.close();
 	}
 	
-	public void handleRequest(PKCS10 pkcs10, String Certificatename) throws Exception{
+	public void createCertificateFromCSR(PKCS10 pkcs10,X509CertImpl certInfo,String key, String certificateName){
+	
+		try {
+			FileInputStream keyfis = new FileInputStream(key);
+			byte[] encKey = new byte[keyfis.available()];  
+			keyfis.read(encKey);
+			keyfis.close();
+			PKCS8EncodedKeySpec pubKeySpec = new PKCS8EncodedKeySpec(encKey);
+			KeyFactory keyFactory = KeyFactory.getInstance("DSA", "SUN");
+			PrivateKey privateKey = keyFactory.generatePrivate(pubKeySpec);
 		
-		
-		if(!checkExistsCAPublicPrivateKey()){
-			createCAPublicPrivateKey("DSA");
+			byte[] certbyte=sign(pkcs10,certInfo,privateKey);
+			File file = new File(certificateName + ".cer");
+			FileOutputStream os = new FileOutputStream(file);
+			os.write(certbyte);
+			os.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+	}
+	
+	@SuppressWarnings("rawtypes")
+	public void handleRequest(PKCS10 pkcs10, String certificateName, String signer) throws Exception{
 		
-		CreateX509Certificate demo=new CreateX509Certificate();
-		X509CertImpl certInfo=(X509CertImpl) demo.generate();
 		
-		if(!checkExistsCACertificate()){
+		/**Check if signer's private & public key exits and also respective certificates.
+		and create CA's if it does not exits **/
+		
+		if(signer.equals("CA")){
+			boolean keyFlag = checkExistsPublicPrivateKey("CaPublicKey.pem","CaPrivateKey.pem");
+			if(!keyFlag) createCAPublicPrivateKey("DSA");
+			boolean certFlag = checkExistsCertificate("CACertificate.cer");
+			if(!certFlag) {
+				CreateX509Certificate createCertificate=new CreateX509Certificate();
+				String dn = "CN=CertificateAuthorityName, L=Manhattan, ST=KS, C=US";
+				X509CertImpl certInfo=(X509CertImpl) createCertificate.generateCertificate(dn,30,"SHA1withDSA");
+				FileOutputStream out = new FileOutputStream("CACertificate.cer");
+				BASE64Encoder encoder = new BASE64Encoder();
+				out.write(X509Factory.BEGIN_CERT.getBytes());
+				out.write('\n');
+			    encoder.encodeBuffer(certInfo.getEncoded(), out);
+			    out.write(X509Factory.END_CERT.getBytes());
+			    createCertificateFromCSR(pkcs10,certInfo,"CaPrivateKey.pem",certificateName);
+			}
+			// reading CA's certificate if it already exits.
+			else{
+				System.out.println("Reading CA's certificate");
+				FileInputStream fis = new FileInputStream("CaCertificate.cer");
+				CertificateFactory cf = CertificateFactory.getInstance("X.509");
+				Collection c = cf.generateCertificates(fis);
+				Iterator i = c.iterator();
+				 Certificate cert = null;
+				while (i.hasNext()) {
+				    cert = (Certificate)i.next();
+				 }
+				if(cert==null) throw new Exception("Error while trying to read CA's Certificate in " + this.getClass());
+				else{
+					X509CertImpl certInfo=(X509CertImpl) cert;
+					createCertificateFromCSR(pkcs10,certInfo,"CaPrivateKey.pem",certificateName);
+				}
+			}
 			
-		System.out.println("Creating Certificate!!");	
-			
-//		CreateX509Certificate demo=new CreateX509Certificate();
-//		X509CertImpl certInfo=(X509CertImpl) demo.generate();
-		
-		
-		FileOutputStream out = new FileOutputStream("CACertificate.cer");
-		BASE64Encoder encoder = new BASE64Encoder();
-		out.write(X509Factory.BEGIN_CERT.getBytes());
-		out.write('\n');
-	    encoder.encodeBuffer(certInfo.getEncoded(), out);
-	    out.write(X509Factory.END_CERT.getBytes());
 		}
-		
-		else{
+		else {
+			boolean keyFlag = checkExistsPublicPrivateKey("ManfPublicKey.pem","ManfPrivateKey.pem");
+			if(!keyFlag) throw new Exception("Manufacturer Public & Private key not found.");
+			boolean certFlag = checkExistsCertificate(signer);
+			if(!certFlag) throw new Exception("Manufacturer Certificate Not Found.");
+			else{
+				System.out.println("Reading Manufacturer's certificate");
+				FileInputStream fis = new FileInputStream(signer);
+				CertificateFactory cf = CertificateFactory.getInstance("X.509");
+				Collection c = cf.generateCertificates(fis);
+				Iterator i = c.iterator();
+				 Certificate cert = null;
+				while (i.hasNext()) {
+				    cert = (Certificate)i.next();
+				 }
+				if(cert==null) throw new Exception("Error while trying to read Manufacturer's Certificate "+ signer +" in " + this.getClass());
+				else{
+					X509CertImpl certInfo=(X509CertImpl) cert;
+					createCertificateFromCSR(pkcs10,certInfo,"ManfPrivateKey.pem",certificateName);
+				}
+			}
 			
-			System.out.println("reading ca certificate");
-			FileInputStream fis = new FileInputStream("CaCertificate.cer");
-			 CertificateFactory cf = CertificateFactory.getInstance("X.509");
-			 Collection c = cf.generateCertificates(fis);
-			 Iterator i = c.iterator();
-			 while (i.hasNext()) {
-			    Certificate cert = (Certificate)i.next();
-			    System.out.println(cert);
-			 }
 		}
-		
-		FileInputStream keyfis = new FileInputStream("Caprivatekey");
-		byte[] encKey = new byte[keyfis.available()];  
-		keyfis.read(encKey);
-		keyfis.close();
-		PKCS8EncodedKeySpec pubKeySpec = new PKCS8EncodedKeySpec(encKey);
-		KeyFactory keyFactory = KeyFactory.getInstance("DSA", "SUN");
-		PrivateKey privateKey = keyFactory.generatePrivate(pubKeySpec);
-		
-		byte[] certbyte=sign(pkcs10,certInfo,privateKey);
-		File file = new File(Certificatename + ".cer");
-	    FileOutputStream os = new FileOutputStream(file);
-	    os.write(certbyte);
-	    os.close();
 	}
 	
 	public void handleDeviceModel(String ca, String manf, String devicecsr) throws FileNotFoundException, CertificateException{

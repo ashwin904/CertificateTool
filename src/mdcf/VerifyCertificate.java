@@ -16,20 +16,53 @@ import java.util.Iterator;
 public class VerifyCertificate {
 
 	@SuppressWarnings("unchecked")
-	public boolean verify(X509Certificate x509certificateRoot,Collection collectionX509CertificateChain){
+	public int verify(X509Certificate x509certificateRoot,Collection collectionX509CertificateChain){
 		System.out.println("Array Size: "+ collectionX509CertificateChain.size());
 		int nSize = collectionX509CertificateChain.size();
 	    X509Certificate [] arx509certificate = new X509Certificate [nSize];
 	    collectionX509CertificateChain.toArray(arx509certificate);
-	    checkRootCA(arx509certificate[0]);
+	    if(!checkRootCA(arx509certificate[0])){
+	    	return 1;
+	    }
 	    
 	    // Working down the chain, for every certificate in the chain,
 	    // verify that the subject of the certificate is the issuer of the
 	    // next certificate in the chain.
+	    X509Certificate x509root = arx509certificate[0];
+	    Principal rootSubj = x509root.getSubjectDN();
 	    
 	    Principal principalLast = null;
 	    for (int i = 0; i < nSize; i++)
 	    {
+	    	
+	      if(i==3){
+	    	  principalLast = rootSubj;
+	    	  X509Certificate x509certificate = arx509certificate[i];
+	    	  Principal principalIssuer = x509certificate.getIssuerDN();
+	    	  System.out.println("New principalLast: " + principalLast);
+	    	  System.out.println("principalIssuer: " + principalIssuer);
+	    	  if (principalIssuer.equals(principalLast))
+		        {
+		          try
+		          {
+		            PublicKey publickey = arx509certificate[0].getPublicKey();
+		            arx509certificate[i].verify(publickey);
+		            System.out.println("signature verificated");
+		          }
+		          catch (GeneralSecurityException generalsecurityexception)
+		          {
+		            System.out.println("signature verification failed");
+		            return 4;
+		          }
+		        }
+		        else
+		        {
+		          System.out.println("subject/issuer verification failed");
+		          return 4;
+		        }
+	    	  continue;
+	      }
+	      
 	      X509Certificate x509certificate = arx509certificate[i];
 	      Principal principalIssuer = x509certificate.getIssuerDN();
 	      Principal principalSubject = x509certificate.getSubjectDN();
@@ -42,25 +75,25 @@ public class VerifyCertificate {
 	          {
 	            PublicKey publickey = arx509certificate[i - 1].getPublicKey();
 	            arx509certificate[i].verify(publickey);
-	            System.out.println("signature verificated");
+	            System.out.println("signature verified");
 	          }
 	          catch (GeneralSecurityException generalsecurityexception)
 	          {
 	            System.out.println("signature verification failed");
-	            return false;
+	            return i+1;
 	          }
 	        }
 	        else
 	        {
 	          System.out.println("subject/issuer verification failed");
-	          return false;
+	          return i+1;
 	        }
 	      }
 	      principalLast = principalSubject;
 	      System.out.println("principalLast: " + principalLast);
 	    }
 		
-		return false;
+		return 0;
 	}
 	
 	public boolean checkRootCA(X509Certificate x509certificateRoot){
