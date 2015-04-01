@@ -255,6 +255,24 @@ public class HandleCSRRequest {
 			boolean certFlag = checkExistsCertificate(signer);
 			if(!certFlag) throw new Exception("Manufacturer Certificate Not Found.");
 			else{
+				 KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA");
+				    keyGen.initialize(1024, new SecureRandom());
+			        KeyPair keypair = keyGen.generateKeyPair();
+			        
+			        PublicKey publicKey = keypair.getPublic();
+			        PrivateKey privateKey = keypair.getPrivate();
+			        
+			        //write public and private key to a file.
+			        
+			        	 byte[] prkey = privateKey.getEncoded();
+			             FileOutputStream keyfos = new FileOutputStream("DeviceModelPK.pem");
+			             keyfos.write(prkey);
+			             keyfos.close();
+			             byte[] pukey = publicKey.getEncoded();
+			             keyfos = new FileOutputStream("DeviceModelPubK.pem");
+			             keyfos.write(pukey);
+			             keyfos.close();
+			        
 				System.out.println("Reading Manufacturer's certificate");
 				FileInputStream fis = new FileInputStream(signer);
 				CertificateFactory cf = CertificateFactory.getInstance("X.509");

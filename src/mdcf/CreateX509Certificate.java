@@ -2,6 +2,7 @@ package mdcf;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -14,6 +15,7 @@ import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
@@ -95,13 +97,54 @@ public class CreateX509Certificate {
 	  return newcert;
 	}   
 	
-	public X509Certificate generateCertificate(int days, String Algorithm, X509Certificate signer ){
+	public X509Certificate generateCertificate(String dn, String days, String algorithm, X509Certificate signer ) throws Exception{
 		
+		FileInputStream keyfis = new FileInputStream("DeviceModelPK.pem");
+		byte[] encKey = new byte[keyfis.available()];  
+		keyfis.read(encKey);
+		keyfis.close();
+		PKCS8EncodedKeySpec prKeySpec = new PKCS8EncodedKeySpec(encKey);
+		KeyFactory keyFactory = KeyFactory.getInstance("DSA", "SUN");
+		PrivateKey caPrivateKey = keyFactory.generatePrivate(prKeySpec);
 		
+		keyfis = new FileInputStream("DeviceModelPubK.pem");
+		encKey = new byte[keyfis.available()];  
+		keyfis.read(encKey);
+		keyfis.close();
+		X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(encKey);
+		keyFactory = KeyFactory.getInstance("DSA", "SUN");
+		PublicKey caPublicKey = keyFactory.generatePublic(pubKeySpec);
 		
+		X509CertInfo info = new X509CertInfo();
+		  
+		  
+		  Date from = new Date();
+		  //check if this is indeed valid!!
+		  Date to = new Date(from.getTime() + Integer.parseInt(days) * 86400000l);
+		  CertificateValidity interval = new CertificateValidity(from, to);
+		  BigInteger sn = new BigInteger(64, new SecureRandom());
+		  X500Name owner = new X500Name(dn);
 		
-		
-		return null;
+		  info.set(X509CertInfo.VALIDITY, interval);
+		  info.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber(sn));
+		  info.set(X509CertInfo.SUBJECT,owner);
+		  info.set(X509CertInfo.ISSUER,signer.getSubjectDN());
+		  info.set(X509CertInfo.KEY, new CertificateX509Key(caPublicKey));
+		  info.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V3));
+		  AlgorithmId algo = new AlgorithmId(AlgorithmId.sha1WithDSA_oid);
+		  info.set(X509CertInfo.ALGORITHM_ID, new CertificateAlgorithmId(algo));
+		 
+		  // Sign the cert to identify the algorithm that's used.
+		  X509CertImpl newcert = new X509CertImpl(info);
+		  newcert.sign(caPrivateKey, algorithm);
+		  
+		 
+		  // Update the algorithm, and resign.
+		  algo = (AlgorithmId)newcert.get(X509CertImpl.SIG_ALG);
+		  info.set(CertificateAlgorithmId.NAME + "." + CertificateAlgorithmId.ALGORITHM, algo);
+		  newcert = new X509CertImpl(info);
+		  newcert.sign(caPrivateKey, algorithm);
+		  return newcert;
 		
 	}
 	

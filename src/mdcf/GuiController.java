@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,7 +27,11 @@ import java.util.List;
 
 import javax.xml.bind.DatatypeConverter;
 
+import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
+
+import sun.misc.BASE64Encoder;
 import sun.security.pkcs10.PKCS10;
+import sun.security.provider.X509Factory;
 import sun.security.x509.X500Name;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -554,20 +559,33 @@ public class GuiController {
 		
 	
 		checkInstanceValidity();
-		FileInputStream fis = new FileInputStream(instanceMfgCertFileChooserText.getText());
-		CertificateFactory cf = CertificateFactory.getInstance("X.509");
-		 Collection c1 = cf.generateCertificates(fis);
-		 Iterator i = c1.iterator();
-		 X509Certificate manf=null;
-		 while (i.hasNext()) {
-		   manf = (X509Certificate)i.next();
-		 }
+	
+		 ObjectInputStream in = new ObjectInputStream(new FileInputStream(instanceDevTypeCertFileChooserText.getText()));
+		    List<byte[]> byteList = (List<byte[]>) in.readObject();
+		    CertificateFactory cf = CertificateFactory.getInstance("X.509");
+		    InputStream is = new ByteArrayInputStream(byteList.get(0));
+			Collection c = cf.generateCertificates(is);
+			Iterator i = c.iterator();
+			 X509Certificate x509deviceModel_1=null;
+			 while (i.hasNext()) {
+				 x509deviceModel_1 = (X509Certificate)i.next();
+			 }
+		 
+		 String dn = "CN="+instanceId;
 		
 		CreateX509Certificate x509Certificate = new CreateX509Certificate();
-		//X509Certificate instanceCertificate = x509Certificate.generateCertificate(validDays, keyAlgorithm, manf);
+		X509Certificate instanceCertificate = x509Certificate.generateCertificate(dn,validDays, keyAlgorithm, x509deviceModel_1);
+		FileOutputStream out = new FileOutputStream(outputFileName);
+		BASE64Encoder encoder = new BASE64Encoder();
+		out.write(X509Factory.BEGIN_CERT.getBytes());
+		out.write('\n');
+	    encoder.encodeBuffer(instanceCertificate.getEncoded(), out);
+	    out.write(X509Factory.END_CERT.getBytes());
+	    
+	    instanceSignErrorLabel.setText("Msg : Device Instance Certificate Created.");
 }
 
-	@FXML protected void handleDeviceInstanceDemoButtonAction(ActionEvent event){
+	@FXML protected void handleDeviceInstanceDemoButtonAction(ActionEvent event) throws Exception{
 		// Device Instance Tab
 		instanceOutputFileChooserText.setText("DevInstance.cer");
 		instanceRootCertFileChooserText.setText("CACertificate.cer");
@@ -577,6 +595,8 @@ public class GuiController {
 		instanceAlgorithmChoiceBox.getSelectionModel().select(0);
 		instanceKeySizeChoiceBox.getSelectionModel().select(0);
 		instanceValidDaysTextField.setText("30");
+		checkInstanceValidity();
+		
 	}
 	
 	@FXML protected void handleRootCertDialogButtonAction(ActionEvent event) throws FileNotFoundException, CertificateException {
@@ -632,16 +652,6 @@ public class GuiController {
 				instanceMfgCertFileChooserTextValidity() &&
 				instanceDevTypeCertFileChooserTextValidity() &&
 				otherInstanceValidityChecks();
-		
-		//TODO: make sure that the certificate files loaded by the user are valid
-		// This should include a visual cue for the user (a green check or red x)
-		
-		if (validity == true) {
-			generateInstanceButton.setDisable(false);
-		}
-		else {
-			generateInstanceButton.setDisable(true);
-		}
 	}
 	
 	private boolean otherInstanceValidityChecks() {
