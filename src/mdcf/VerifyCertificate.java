@@ -47,7 +47,7 @@ public class VerifyCertificate {
 		          {
 		            PublicKey publickey = arx509certificate[0].getPublicKey();
 		            arx509certificate[i].verify(publickey);
-		            System.out.println("signature verificated");
+		            System.out.println("signature verified");
 		          }
 		          catch (GeneralSecurityException generalsecurityexception)
 		          {

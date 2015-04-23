@@ -101,6 +101,7 @@ public class GuiController {
 
 		try {
 			
+			
 
 			if(!manufacturerManufacturerTextField.getText().isEmpty()) {
 				organization = manufacturerManufacturerTextField.getText();
@@ -599,8 +600,7 @@ public class GuiController {
 		
 	}
 	
-	@FXML protected void handleRootCertDialogButtonAction(ActionEvent event) throws FileNotFoundException, CertificateException {
-		System.out.println("Called");
+	@FXML protected void handleRootCertDialogButtonAction(ActionEvent event) throws Exception {
 		FileChooser fileChooser = new FileChooser();
 		File f = fileChooser.showOpenDialog(stage);
 		instanceRootCertFileChooserText.setText(f.getName());
@@ -691,7 +691,7 @@ public class GuiController {
 		return validity;
 	}
 	
-	private boolean instanceRootCertFileChooserTextValidity() throws FileNotFoundException, CertificateException
+	private boolean instanceRootCertFileChooserTextValidity() throws Exception
 	{
 		String t = instanceRootCertFileChooserText.getText();
 		boolean validity = false;
@@ -707,6 +707,8 @@ public class GuiController {
 		
 		//TODO: maybe do more checks here??
 		rootinstcheck.setSelected(false);
+		manfinstcheck.setSelected(false);
+		deviceinstcheck.setSelected(false);
 		FileInputStream fis = new FileInputStream(instanceRootCertFileChooserText.getText());
 		
 		 CertificateFactory cf = CertificateFactory.getInstance("X.509");
@@ -721,12 +723,21 @@ public class GuiController {
 		 if(verifyCertificate.checkRootCA(x509certificateRoot)){
 			 validity = true;
 		 }
+		 if(!instanceMfgCertFileChooserText.getText().isEmpty()){
+			 instanceMfgCertFileChooserTextValidity();
+			 if(!instanceDevTypeCertFileChooserText.getText().isEmpty()){
+				 instanceDevTypeCertFileChooserTextValidity();
+			 }
+		 }
+		 
 		 
 		return validity;
 	}
 
 	private boolean instanceMfgCertFileChooserTextValidity() throws Exception
 	{
+		manfinstcheck.setSelected(false);
+		deviceinstcheck.setSelected(false);
 		String t = instanceMfgCertFileChooserText.getText();
 		boolean validity = false;
 		
@@ -788,6 +799,7 @@ public class GuiController {
 	
 	private boolean instanceDevTypeCertFileChooserTextValidity()
 	{
+		deviceinstcheck.setSelected(false);
 		String t = instanceDevTypeCertFileChooserText.getText();
 		boolean validity = false;
 		
@@ -1054,13 +1066,33 @@ public class GuiController {
 	
 	
 	@FXML protected void handleModelSignRootCertDialogButtonAction(ActionEvent event) throws Exception {
+		rootcheck.setSelected(false);
+		manfcheck.setSelected(false);
+		csrcheck.setSelected(false);
 		modelSignErrorLabel.setText("");
 		FileChooser fileChooser = new FileChooser();
 		fileChooser.setTitle("Select a Root Certificate File.");
 		File f = fileChooser.showOpenDialog(stage);
-		if (f == null) { System.err.println("Null File."); }
+		if (f == null) { 
+			System.err.println("Null File."); 
+		}
 		else {
 			modelSignRootCertFileChooserText.setText(f.getName());
+			if(!modelSignMfgCertFileChooserText.getText().isEmpty() && !modelSignDevTypeCertFileChooserText.getText().isEmpty()){
+				manfcheck.setSelected(false);
+				csrcheck.setSelected(false);
+				boolean result = checkCertificatevalidity("Manf");
+				if (result){
+				result = checkCertificatevalidity("");
+				if(result){
+					csrcheck.setSelected(true);
+				}
+				}
+			}
+			else if(!modelSignMfgCertFileChooserText.getText().isEmpty()){
+				checkCertificatevalidity("Manf");
+			}
+			else{
 			boolean result = checkCertificatevalidity("CA");
 			if(result){
 				rootcheck.setSelected(true);
@@ -1069,6 +1101,7 @@ public class GuiController {
 				modelSignErrorLabel.setText("Error : Root Certificate invalid.");
 				throw new Exception("");
 			}
+		}
 		}
 	}
 	
@@ -1119,9 +1152,18 @@ public class GuiController {
      * @return a CSR String stripped of the text headers and footers
      */
     public static String removeCSRHeadersAndFooters(String inString)
-    {
+    { 
+        Boolean winandnotmac = inString.contains("-----BEGIN NEW CERTIFICATE REQUEST-----\r\n");
+        if(winandnotmac){
+        inString = inString.replace("-----BEGIN NEW CERTIFICATE REQUEST-----" + "\r\n", "");
+        inString = inString.replace("\r\n" + "-----END NEW CERTIFICATE REQUEST-----" + "\n", "");
+        }
+        else
+        {
         inString = inString.replace("-----BEGIN NEW CERTIFICATE REQUEST-----" + "\n", "");
-        inString = inString.replace("\n" + "-----END NEW CERTIFICATE REQUEST-----" + "\n", "");
+            inString = inString.replace("\n" + "-----END NEW CERTIFICATE REQUEST-----" + "\n", "");
+        }
+       
       return inString;
     }
     
@@ -1131,6 +1173,8 @@ public class GuiController {
     		
 	    	if(certName.equals("CA")){
 	    		rootcheck.setSelected(false);
+	    		manfcheck.setSelected(false);
+	    		csrcheck.setSelected(false);
 	    		FileInputStream fis = new FileInputStream(modelSignRootCertFileChooserText.getText());
 				
 				 CertificateFactory cf = CertificateFactory.getInstance("X.509");
@@ -1147,8 +1191,8 @@ public class GuiController {
 				 }
 	    	}
 	    	else if(certName.equals("Manf")){
-	    		rootcheck.setSelected(false);
 	    		manfcheck.setSelected(false);
+	    		csrcheck.setSelected(false);
 	    		FileInputStream fis = new FileInputStream(modelSignRootCertFileChooserText.getText());
 				
 				 CertificateFactory cf = CertificateFactory.getInstance("X.509");
@@ -1183,12 +1227,18 @@ public class GuiController {
 				 if (value == 0){
 					 rootcheck.setSelected(true);
 					 manfcheck.setSelected(true);
+					 if(!modelSignDevTypeCertFileChooserText.getText().isEmpty()){
+						 boolean result = checkCertificatevalidity(" ");
+						 if(result){ csrcheck.setSelected(true);}
+					 }
 				 }
 				 else if(value == 2){
 					 rootcheck.setSelected(true);
 				 }
-				 
+				if(value==0){
 	    		return true;
+				}
+				return false;
 	    	}
 	    	
 	    	else{

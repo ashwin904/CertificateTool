@@ -14,7 +14,7 @@
   <children>
     <TabPane layoutY="22.0" prefHeight="334.0" prefWidth="800.0" tabClosingPolicy="UNAVAILABLE">
       <tabs>
-        <Tab id = 'RMC' text="Request Manufacturer Certificate">
+        <Tab id = 'RMC' text="Generate Manufacturer Certificate">
           <content>
             <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="298.0" prefWidth="800.0">
               <children>
@@ -79,7 +79,7 @@
                         </ChoiceBox>
                         <Button disable="false" layoutX="18.0" layoutY="178.0" mnemonicParsing="false" onAction="#handleGenerateManufacturerCertRequestButtonAction" prefHeight="37.310546875" text="Generate Manufacturer Certificate" />
                         <TextField fx:id="manufacturerOutputFileChooserText" layoutX="14.0" layoutY="142.0" prefWidth="163.0"/>
-						<Button text="Demo" onAction="#handleManufacturerCertDemoButtonAction" layoutX="296.0" layoutY="0.0" minWidth="21.0"/>
+						<Button style="-fx-font: BOLD 13 Tahoma;" text="Demo" onAction="#handleManufacturerCertDemoButtonAction" layoutX="296.0" layoutY="0.0" minWidth="21.0"/>
                     	<Button layoutX="176.0" layoutY="142.0" minWidth="21.0" mnemonicParsing="false" prefWidth="39.0" text="..." />
                       </children>
                     </Pane>
@@ -150,7 +150,7 @@
                         <Button fx:id="generateModelCertRequestButton" layoutX="18.0" layoutY="178.0" mnemonicParsing="false" onAction="#handleGenerateModelCertRequestButtonAction" prefHeight="37.310546875" text="Generate Device Model Certificate Request" />
                         <TextField fx:id="modelOutputFileChooserText" layoutX="14.0" layoutY="142.0" onAction="#handleModelEnterKeyAction" prefWidth="163.0"/>
                         <Button layoutX="176.0" layoutY="142.0" minWidth="21.0" mnemonicParsing="false" onAction="#handleModelFileDialogButtonAction" prefWidth="39.0" text="..." />
-                        <Button text="Demo" onAction="#handleDeviceModelDemoButtonAction" layoutX="296.0" layoutY="0.0" minWidth="21.0"/>
+                        <Button style="-fx-font: BOLD 13 Tahoma;" text="Demo" onAction="#handleDeviceModelDemoButtonAction" layoutX="296.0" layoutY="0.0" minWidth="21.0"/>
                       </children>
                     </Pane>
                     <Label fx:id="modelErrorLabel" layoutX="38.0" layoutY="260.0"/>
@@ -192,7 +192,7 @@
                         <Button layoutX="18.0" layoutY="178.0" mnemonicParsing="false" onAction="#handleModelSignButtonAction" prefHeight="37.310546875" text="Sign Device Model Certificate" />
                         <TextField fx:id="modelSignOutputFileChooserText" layoutX="14.0" layoutY="142.0" prefWidth="163.0"/>
                         <Button layoutX="176.0" layoutY="142.0" minWidth="21.0" mnemonicParsing="false" onAction="#handleModelSignFileDialogButtonAction" prefWidth="39.0" text="..." />
- 						<Button text="Demo" onAction="#handleSignDeviceDemoButtonAction" layoutX="296.0" layoutY="0.0" minWidth="21.0"/>                     
+ 						<Button style="-fx-font: BOLD 13 Tahoma;" text="Demo" onAction="#handleSignDeviceDemoButtonAction" layoutX="296.0" layoutY="0.0" minWidth="21.0"/>                     
                       </children>
                     </Pane>
                      <Label fx:id="modelSignErrorLabel" layoutX="38.0" layoutY="260.0"/>
@@ -254,7 +254,7 @@
                         <Button fx:id="generateInstanceButton" onAction="#handleInstanceGenerateButtonAction" layoutX="18.0" layoutY="178.0" mnemonicParsing="false" prefHeight="37.310546875" text="Generate Device Instance Certificate" />
                         <TextField fx:id="instanceOutputFileChooserText" layoutX="14.0" layoutY="142.0" prefWidth="163.0" />
                         <Button layoutX="176.0" layoutY="142.0" minWidth="21.0" mnemonicParsing="false" onAction="#handleInstanceFileDialogButtonAction" prefWidth="39.0" text="..." />
-                        <Button text="Demo" onAction="#handleDeviceInstanceDemoButtonAction" layoutX="296.0" layoutY="0.0" minWidth="21.0"/>  
+                        <Button style="-fx-font: BOLD 13 Tahoma;" text="Demo" onAction="#handleDeviceInstanceDemoButtonAction" layoutX="296.0" layoutY="0.0" minWidth="21.0"/>  
                       </children>
                     </Pane>
                     <Label fx:id="instanceSignErrorLabel" layoutX="38.0" layoutY="260.0"/>
