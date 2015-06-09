@@ -99,6 +99,7 @@ public class CreateX509Certificate {
 	
 	public X509Certificate generateCertificate(String dn, String days, String algorithm, X509Certificate signer ) throws Exception{
 		
+		
 		FileInputStream keyfis = new FileInputStream("DeviceModelPK.pem");
 		byte[] encKey = new byte[keyfis.available()];  
 		keyfis.read(encKey);
@@ -129,6 +130,9 @@ public class CreateX509Certificate {
 		  info.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber(sn));
 		  info.set(X509CertInfo.SUBJECT,owner);
 		  info.set(X509CertInfo.ISSUER,signer.getSubjectDN());
+		  System.out.println("*********************************");
+		  System.out.println(signer.getSubjectDN());
+		  System.out.println("*********************************");
 		  info.set(X509CertInfo.KEY, new CertificateX509Key(caPublicKey));
 		  info.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V3));
 		  AlgorithmId algo = new AlgorithmId(AlgorithmId.sha1WithDSA_oid);

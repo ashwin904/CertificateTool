@@ -40,7 +40,7 @@ public class CSRRequest {
              FileOutputStream keyfos = new FileOutputStream(privateKeyName);
              keyfos.write(prkey);
              keyfos.close();
-             byte[] pukey = privateKey.getEncoded();
+             byte[] pukey = publicKey.getEncoded();
              keyfos = new FileOutputStream(publicKeyName);
              keyfos.write(pukey);
              keyfos.close();

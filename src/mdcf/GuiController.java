@@ -342,7 +342,7 @@ public class GuiController {
                 country); 
 		
 			CSRRequest csrRequest = new CSRRequest();
-			PKCS10 pkcs10 = csrRequest.generatePKCS10(keyAlgorithm, keySize, x500Name,csrFileName,"","");
+			PKCS10 pkcs10 = csrRequest.generatePKCS10(keyAlgorithm, keySize, x500Name,csrFileName,"DeviceModelPubK.pem","DeviceModelPK.pem");
 			if (pkcs10!=null) 
 				{System.out.println("Certificate Request Generated");
 				modelErrorLabel.setText("Msg: Certification Signing Request Created.");

@@ -259,19 +259,19 @@ public class HandleCSRRequest {
 				    keyGen.initialize(1024, new SecureRandom());
 			        KeyPair keypair = keyGen.generateKeyPair();
 			        
-			        PublicKey publicKey = keypair.getPublic();
-			        PrivateKey privateKey = keypair.getPrivate();
-			        
-			        //write public and private key to a file.
-			        
-			        	 byte[] prkey = privateKey.getEncoded();
-			             FileOutputStream keyfos = new FileOutputStream("DeviceModelPK.pem");
-			             keyfos.write(prkey);
-			             keyfos.close();
-			             byte[] pukey = publicKey.getEncoded();
-			             keyfos = new FileOutputStream("DeviceModelPubK.pem");
-			             keyfos.write(pukey);
-			             keyfos.close();
+//			        PublicKey publicKey = keypair.getPublic();
+//			        PrivateKey privateKey = keypair.getPrivate();
+//			        
+//			        //write public and private key to a file.
+//			        
+//			        	 byte[] prkey = privateKey.getEncoded();
+//			             FileOutputStream keyfos = new FileOutputStream("DeviceModelPK.pem");
+//			             keyfos.write(prkey);
+//			             keyfos.close();
+//			             byte[] pukey = publicKey.getEncoded();
+//			             keyfos = new FileOutputStream("DeviceModelPubK.pem");
+//			             keyfos.write(pukey);
+//			             keyfos.close();
 			        
 				System.out.println("Reading Manufacturer's certificate");
 				FileInputStream fis = new FileInputStream(signer);
