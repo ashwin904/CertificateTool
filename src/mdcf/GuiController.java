@@ -1,11 +1,13 @@
 package mdcf;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -561,16 +563,14 @@ public class GuiController {
 	
 		checkInstanceValidity();
 	
-		 ObjectInputStream in = new ObjectInputStream(new FileInputStream(instanceDevTypeCertFileChooserText.getText()));
-		    List<byte[]> byteList = (List<byte[]>) in.readObject();
-		    CertificateFactory cf = CertificateFactory.getInstance("X.509");
-		    InputStream is = new ByteArrayInputStream(byteList.get(0));
-			Collection c = cf.generateCertificates(is);
-			Iterator i = c.iterator();
-			 X509Certificate x509deviceModel_1=null;
-			 while (i.hasNext()) {
-				 x509deviceModel_1 = (X509Certificate)i.next();
-			 }
+			 FileInputStream is = new FileInputStream(instanceDevTypeCertFileChooserText.getText());
+			 CertificateFactory cf = CertificateFactory.getInstance("X.509");
+			 Collection	c = cf.generateCertificates(is);
+			 Iterator i = c.iterator();
+				 X509Certificate x509deviceModel_1=null;
+				 while (i.hasNext()) {
+					 x509deviceModel_1 = (X509Certificate)i.next();
+					 }
 		 
 		 String dn = "CN="+instanceId;
 		
@@ -826,6 +826,7 @@ public class GuiController {
 			
 			//Read CA Certificate
 			FileInputStream fis;
+       	 Collection<X509Certificate> collectionX509CertificateChain = new ArrayList<X509Certificate>();
 			try {
 				fis = new FileInputStream(instanceRootCertFileChooserText.getText());
 			
@@ -835,6 +836,7 @@ public class GuiController {
 			 X509Certificate x509certificateRoot=null;
 			 while (i.hasNext()) {
 				 x509certificateRoot = (X509Certificate)i.next();
+				 collectionX509CertificateChain.add(x509certificateRoot);
 			 }
 			 
 			 //Read Manufacturer Certificate.
@@ -845,35 +847,18 @@ public class GuiController {
 			 X509Certificate manf=null;
 			 while (i.hasNext()) {
 			   manf = (X509Certificate)i.next();
+				 collectionX509CertificateChain.add(manf);					
 			 }
 			 
-			 ObjectInputStream in = new ObjectInputStream(new FileInputStream(instanceDevTypeCertFileChooserText.getText()));
-			    List<byte[]> byteList = (List<byte[]>) in.readObject();
+			 FileInputStream is = new FileInputStream(instanceDevTypeCertFileChooserText.getText());
 			    cf = CertificateFactory.getInstance("X.509");
-			    InputStream is = new ByteArrayInputStream(byteList.get(0));
 				c = cf.generateCertificates(is);
 				i = c.iterator();
 				 X509Certificate x509deviceModel_1=null;
 				 while (i.hasNext()) {
 					 x509deviceModel_1 = (X509Certificate)i.next();
+					 collectionX509CertificateChain.add(x509deviceModel_1);		
 				 }
-				 
-				 cf = CertificateFactory.getInstance("X.509");
-				 is = new ByteArrayInputStream(byteList.get(1));
-					c = cf.generateCertificates(is);
-					i = c.iterator();
-					 X509Certificate x509deviceModel_2=null;
-					 while (i.hasNext()) {
-						 x509deviceModel_2 = (X509Certificate)i.next();
-					 }
-			 
-			 
-			 Collection<X509Certificate> collectionX509CertificateChain = new ArrayList<X509Certificate>();
-			 collectionX509CertificateChain.add(x509certificateRoot);
-			 collectionX509CertificateChain.add(manf);
-			 collectionX509CertificateChain.add(x509deviceModel_1);
-			 collectionX509CertificateChain.add(x509deviceModel_2);
-			 
 			 VerifyCertificate verifyCert = new VerifyCertificate();
 			 int value = verifyCert.verify(x509certificateRoot, collectionX509CertificateChain);
 			 
@@ -900,10 +885,7 @@ public class GuiController {
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			} 
 		}
 		return false;
 	}
@@ -1013,44 +995,39 @@ public class GuiController {
 		
 		
 			try {
-				List<byte[]> list = new ArrayList<byte[]>();	
-				Path path = Paths.get("tempManf.cer");
-				 list.add(Files.readAllBytes(path));
-				 Files.delete(path);
-				// list.add("/n/n".getBytes());
-				 	path = Paths.get("tempCa.cer");
-				 list.add(Files.readAllBytes(path));
-				 Files.delete(path);
-				 
-				 
-				 
-				 ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(outputFileName));
-				    out.writeObject(list);
-				    out.close();
-				    
-				    modelSignErrorLabel.setText("Msg : Device Model Certificate Created.");
-				 
-				    ObjectInputStream in = new ObjectInputStream(new FileInputStream(outputFileName));
-				    List<byte[]> byteList = (List<byte[]>) in.readObject();
-
-				    //if you want to add to list you will need to add to byteList and write it again
-				    System.out.println("ByteList Size :" + byteList.size());
-				    for (byte[] bytes : byteList) {
-				        System.out.println(new String(bytes));
-				    }
-			 
-		 
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
+				File[] files=new File[2];
+				files[0]=new File("tempManf.cer");
+				files[1]=new File("tempCa.cer");				 
+				FileWriter fstream = null;
+				BufferedWriter out = null;
+				File outputFile=new File(outputFileName);
+				fstream = new FileWriter(outputFile, true);
+				out = new BufferedWriter(fstream);
+				for (File f : files) {
+				  System.out.println("merging: " + f.getName());
+				  FileInputStream fis;
+			      fis = new FileInputStream(f);
+		          BufferedReader in = new BufferedReader(new InputStreamReader(fis));
+			      String aLine;
+				  while ((aLine = in.readLine()) != null) {
+					out.write(aLine);
+					out.newLine();
+		        	}
+				  in.close();
+				}
+				out.close();
+				modelSignErrorLabel.setText("Msg : Device Model Certificate Created.");
+				FileInputStream fis = new FileInputStream(outputFileName);
+				int oneByte;
+				while ((oneByte = fis.read()) != -1) {
+					System.out.write(oneByte);
+				}
+				boolean del = files[0].delete();
+				del = files[1].delete();
+			}
+			catch (IOException e) {
 				e.printStackTrace();
 			}
-			
 	}
 
 	

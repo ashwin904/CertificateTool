@@ -30,18 +30,24 @@ public class VerifyCertificate {
 	    // next certificate in the chain.
 	    X509Certificate x509root = arx509certificate[0];
 	    Principal rootSubj = x509root.getSubjectDN();
-	    
+	    String CAName = (rootSubj.toString().substring(rootSubj.toString().indexOf("=")+1, rootSubj.toString().indexOf(","))).trim();
+	/*   if(!CAName.equalsIgnoreCase("certificateauthorityname"))
+	    {
+	    	 System.out.println("Not a recognised CA Authority");
+	    	return 6;
+	    } */
 	    Principal principalLast = null;
+	    Principal newPrincipalLast = null;
 	    for (int i = 0; i < nSize; i++)
 	    {
 	    	
 	      if(i==3){
-	    	  principalLast = rootSubj;
+	    	  newPrincipalLast = rootSubj;
 	    	  X509Certificate x509certificate = arx509certificate[i];
 	    	  Principal principalIssuer = x509certificate.getIssuerDN();
-	    	  System.out.println("New principalLast: " + principalLast);
+	    	  System.out.println("New principalLast: " + newPrincipalLast);
 	    	  System.out.println("principalIssuer: " + principalIssuer);
-	    	  if (principalIssuer.equals(principalLast))
+	    	  if (principalIssuer.equals(newPrincipalLast))
 		        {
 		          try
 		          {
