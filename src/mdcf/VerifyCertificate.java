@@ -95,6 +95,17 @@ public class VerifyCertificate {
 	          return i+1;
 	        }
 	      }
+	      else
+	      {
+if(principalIssuer.equals(principalSubject)){
+		      principalLast = principalSubject;
+		      System.out.println("principalLast: " + principalLast);
+}
+else{
+    System.out.println("Root Certificate Invalid" );
+	return i+1;
+}	 
+}
 	      principalLast = principalSubject;
 	      System.out.println("principalLast: " + principalLast);
 	    }

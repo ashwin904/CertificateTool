@@ -222,6 +222,7 @@ public class GuiController {
 		manufacturerKeySizeChoiceBox.getSelectionModel().select(0);
 		manufacturerCountryChoiceBox.getSelectionModel().select(0);
 		manufacturerStateOrProvenceChoiceBox.getSelectionModel().select(0);
+		modelSignErrorLabel.setText("");
 		
 	}
 	
@@ -368,6 +369,7 @@ public class GuiController {
 		modelKeySizeChoiceBox.getSelectionModel().select(0);
 		modelStateOrProvenceChoiceBox.getSelectionModel().select(0);
 		modelCountryChoiceBox.getSelectionModel().select(0);
+		modelSignErrorLabel.setText("");
 	}
 	
 	@FXML protected void handleModelFileDialogButtonAction(ActionEvent event) {
@@ -596,6 +598,7 @@ public class GuiController {
 		instanceAlgorithmChoiceBox.getSelectionModel().select(0);
 		instanceKeySizeChoiceBox.getSelectionModel().select(0);
 		instanceValidDaysTextField.setText("30");
+		instanceSignErrorLabel.setText("");
 		checkInstanceValidity();
 		
 	}
@@ -723,6 +726,11 @@ public class GuiController {
 		 if(verifyCertificate.checkRootCA(x509certificateRoot)){
 			 validity = true;
 		 }
+		 else
+		 {
+			 instanceSignErrorLabel.setText("Error : Root Certificate Invalid");
+			 throw new Exception("");
+		 }
 		 if(!instanceMfgCertFileChooserText.getText().isEmpty()){
 			 instanceMfgCertFileChooserTextValidity();
 			 if(!instanceDevTypeCertFileChooserText.getText().isEmpty()){
@@ -765,6 +773,7 @@ public class GuiController {
 		 fis = new FileInputStream(instanceMfgCertFileChooserText.getText());
 		 cf = CertificateFactory.getInstance("X.509");
 		 Collection c1 = cf.generateCertificates(fis);
+		 if(c1.size()<2){
 		 i = c1.iterator();
 		 X509Certificate manf=null;
 		 while (i.hasNext()) {
@@ -786,12 +795,24 @@ public class GuiController {
 		 if (value == 0){
 			 rootinstcheck.setSelected(true);
 			 manfinstcheck.setSelected(true);
+			// modelSignErrorLabel.setText("");
+			 instanceSignErrorLabel.setText("");
+			 if(!instanceDevTypeCertFileChooserText.getText().isEmpty())
+				 instanceDevTypeCertFileChooserTextValidity();
 		 }
 		 else if(value == 2){
 			 rootinstcheck.setSelected(true);
+			 instanceSignErrorLabel.setText("Error : Manufacturer Certificate invalid.");
+			 throw new Exception("");
 		 }
 		 
-	
+		 }
+		 else
+		 {
+			 rootinstcheck.setSelected(true);
+			 instanceSignErrorLabel.setText("Error : Manufacturer Certificate invalid.");
+			 throw new Exception("");
+		 }
 		validity = true;
 		
 		return validity;
@@ -873,6 +894,7 @@ public class GuiController {
 			 else if(value == 3){
 				 rootinstcheck.setSelected(true);
 				 manfinstcheck.setSelected(true);
+				 return false;
 			 }
 			 
 			 return true;
@@ -1001,6 +1023,11 @@ public class GuiController {
 				FileWriter fstream = null;
 				BufferedWriter out = null;
 				File outputFile=new File(outputFileName);
+			    String path = outputFile.getAbsolutePath();
+			    Path p = Paths.get(path);
+			    Files.deleteIfExists(p);
+				//outputFile.delete();
+			    outputFile.createNewFile();
 				fstream = new FileWriter(outputFile, true);
 				out = new BufferedWriter(fstream);
 				for (File f : files) {
@@ -1038,6 +1065,7 @@ public class GuiController {
 		modelSignMfgCertFileChooserText.setText("manf_johnson.cer");
 		modelSignDevTypeCertFileChooserText.setText("N900.csr");
 		modelSignValidDaysTextField.setText("30");
+		modelSignErrorLabel.setText("");
 		checkModelSignValidity();
 	}
 	
@@ -1183,6 +1211,8 @@ public class GuiController {
 				 fis = new FileInputStream(modelSignMfgCertFileChooserText.getText());
 				 cf = CertificateFactory.getInstance("X.509");
 				 Collection c1 = cf.generateCertificates(fis);
+				 int value;
+				 if(c1.size()<2){
 				 i = c1.iterator();
 				 X509Certificate manf=null;
 				 while (i.hasNext()) {
@@ -1194,8 +1224,12 @@ public class GuiController {
 				 collectionX509CertificateChain.add(manf);
 				 
 				 VerifyCertificate verifyCert = new VerifyCertificate();
-				 int value = verifyCert.verify(x509certificateRoot, collectionX509CertificateChain);
-				 
+				 value = verifyCert.verify(x509certificateRoot, collectionX509CertificateChain);
+				 }
+	       	else
+	    	{
+	    		value = 2;
+	    	}
 				 if(value == 1){
 					 modelSignErrorLabel.setText("Error : Root Certificate invalid.");
 						throw new Exception("");
