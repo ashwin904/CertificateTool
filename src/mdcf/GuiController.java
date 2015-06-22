@@ -725,6 +725,7 @@ public class GuiController {
 		 VerifyCertificate verifyCertificate = new VerifyCertificate();
 		 if(verifyCertificate.checkRootCA(x509certificateRoot)){
 			 validity = true;
+			 instanceSignErrorLabel.setText("");
 		 }
 		 else
 		 {
@@ -785,8 +786,10 @@ public class GuiController {
 		 collectionX509CertificateChain.add(manf);
 		 
 		 VerifyCertificate verifyCert = new VerifyCertificate();
-		 int value = verifyCert.verify(x509certificateRoot, collectionX509CertificateChain);
-		 
+		 int value;
+		 if(!(x509certificateRoot.getSubjectDN().equals(manf.getSubjectDN())))
+		 value = verifyCert.verify(x509certificateRoot, collectionX509CertificateChain);
+		 else value = 2;
 		 if(value == 1){
 			 modelSignErrorLabel.setText("Error : Root Certificate invalid.");
 				throw new Exception("");
@@ -802,6 +805,7 @@ public class GuiController {
 		 }
 		 else if(value == 2){
 			 rootinstcheck.setSelected(true);
+			 manfinstcheck.setSelected(false);
 			 instanceSignErrorLabel.setText("Error : Manufacturer Certificate invalid.");
 			 throw new Exception("");
 		 }
@@ -810,6 +814,7 @@ public class GuiController {
 		 else
 		 {
 			 rootinstcheck.setSelected(true);
+			 manfinstcheck.setSelected(false);
 			 instanceSignErrorLabel.setText("Error : Manufacturer Certificate invalid.");
 			 throw new Exception("");
 		 }
@@ -887,17 +892,23 @@ public class GuiController {
 				 rootinstcheck.setSelected(true);
 				 manfinstcheck.setSelected(true);
 				 deviceinstcheck.setSelected(true);
+				 return true;
 			 }
 			 else if(value == 2){
 				 rootinstcheck.setSelected(true);
+				 manfinstcheck.setSelected(false);
+				 deviceinstcheck.setSelected(false);
+				 instanceSignErrorLabel.setText("Error : Manufacturer Certificate invalid.");
 			 }
 			 else if(value == 3){
 				 rootinstcheck.setSelected(true);
 				 manfinstcheck.setSelected(true);
-				 return false;
+				 deviceinstcheck.setSelected(false);
+				 instanceSignErrorLabel.setText("Error : Device Model Certificate invalid.");
+				 throw new Exception("");
 			 }
 			 
-			 return true;
+			 return false;
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -905,6 +916,9 @@ public class GuiController {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} 
@@ -1086,8 +1100,13 @@ public class GuiController {
 			if(!modelSignMfgCertFileChooserText.getText().isEmpty() && !modelSignDevTypeCertFileChooserText.getText().isEmpty()){
 				manfcheck.setSelected(false);
 				csrcheck.setSelected(false);
-				boolean result = checkCertificatevalidity("Manf");
+				boolean result = checkCertificatevalidity("CA");
+				if(result){
+					rootcheck.setSelected(true);
+					result = checkCertificatevalidity("Manf");
+				}
 				if (result){
+					manfcheck.setSelected(true);
 				result = checkCertificatevalidity("");
 				if(result){
 					csrcheck.setSelected(true);
@@ -1103,6 +1122,7 @@ public class GuiController {
 				rootcheck.setSelected(true);
 			}
 			else{
+				rootcheck.setSelected(false);
 				modelSignErrorLabel.setText("Error : Root Certificate invalid.");
 				throw new Exception("");
 			}
@@ -1139,7 +1159,8 @@ public class GuiController {
 			csrcheck.setSelected(true);
 		}
 		else{
-			modelSignErrorLabel.setText("Error : Device Model Certficate Request invalid.");
+			csrcheck.setSelected(false);
+			modelSignErrorLabel.setText("Error : Device Model Certificate Request invalid.");
 			throw new Exception("");
 		}
 	}
@@ -1194,6 +1215,10 @@ public class GuiController {
 				 if(verifyCertificate.checkRootCA(x509certificateRoot)){
 					 return true;
 				 }
+				 else
+				 {
+					 modelSignErrorLabel.setText("Error : Root Certificate invalid.");					 
+				 }
 	    	}
 	    	else if(certName.equals("Manf")){
 	    		manfcheck.setSelected(false);
@@ -1224,7 +1249,9 @@ public class GuiController {
 				 collectionX509CertificateChain.add(manf);
 				 
 				 VerifyCertificate verifyCert = new VerifyCertificate();
+				 if(!(manf.getSubjectDN().equals(x509certificateRoot.getSubjectDN())))
 				 value = verifyCert.verify(x509certificateRoot, collectionX509CertificateChain);
+				 else value=2;
 				 }
 	       	else
 	    	{
@@ -1241,14 +1268,18 @@ public class GuiController {
 					 if(!modelSignDevTypeCertFileChooserText.getText().isEmpty()){
 						 boolean result = checkCertificatevalidity(" ");
 						 if(result){ csrcheck.setSelected(true);}
+			return true;
 					 }
+					 return true;
 				 }
 				 else if(value == 2){
 					 rootcheck.setSelected(true);
+					 manfcheck.setSelected(false);
+					 csrcheck.setSelected(false);
 				 }
-				if(value==0){
-	    		return true;
-				}
+//				if(value==0){
+	//    		return true;
+		//		}
 				return false;
 	    	}
 	    	
